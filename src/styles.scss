@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Gemunu Libre', sans-serif;
+  background: black;
+  color: white;
+}
+
+.btn {
+  @apply text-white font-bold py-0.5 px-4 border-blue-600 border-2 transition-colors;
+  &:hover {
+    @apply bg-blue-600;
+  }
+  &:active,
+  &.btn-primary:active {
+    @apply bg-blue-400;
+  }
+
+  &.btn-primary {
+    @apply bg-blue-600;
+    &:hover {
+      @apply bg-blue-500;
+    }
+    &:active {
+      @apply bg-blue-400;
+    }
+  }
+}
+
+h1,h2,h3,h4,h5,h6 {
+  @apply block font-bold;
+}
+
+.h1 {
+  @apply text-6xl ;
+}
+
+.h2 {
+  @apply text-4xl;
+}
+
+.h3 {
+  @apply text-2xl;
+}
+
+a {
+  @apply font-bold text-blue-400 transition-colors;
+  &:hover {
+    @apply text-blue-300;
+  }
+}
