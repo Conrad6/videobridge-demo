@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { SettingsComponent } from './components/settings/settings.component';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,12 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'videobridge-demo';
+  rightPanelCollapsed = false;
+  bottomPanelCollapsed = false;
+  @ViewChild('settings') settings: SettingsComponent | undefined;
+
+  showingSettings() {
+    if (!this.settings) return;
+    this.settings.showSettings();
+  }
 }

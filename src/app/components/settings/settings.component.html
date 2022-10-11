@@ -1,0 +1,165 @@
+<dialog class="settings-dialog" #settingsDialog>
+  <form [formGroup]="settingsForm">
+    <div class="dialog-content">
+      <div
+        class="dialog-header border-b-2 border-blue-500 p-2 flex justify-between items-center"
+      >
+        <h3 class="h3"><i class="fa fa-cog"></i> Settings</h3>
+        <button
+          type="reset"
+          (click)="closeSettings()"
+          class="text-4xl font-bold"
+        >
+          &times;
+        </button>
+      </div>
+      <div class="dialog-body p-2">
+        <table class="w-full">
+          <tr class="mb-2">
+            <td><h3 class="h3">Personal</h3></td>
+            <td></td>
+          </tr>
+          <tr class="border-b-2 border-blue-500">
+            <td>
+              <label for="displayName"
+                >Display Name <span class="text-danger">*</span></label
+              >
+            </td>
+            <td>
+              <input
+                formControlName="displayName"
+                type="text"
+                id="displayName"
+                class="form-control"
+              />
+            </td>
+          </tr>
+          <tr class="mt-4 mb-3">
+            <td><h3 class="h3">Devices</h3></td>
+            <td></td>
+          </tr>
+          <ng-container *ngIf="devices.audio.in.length > 0; else noAudioIn">
+            <tr>
+              <td>
+                <label for="audioIn">Audio in</label>
+              </td>
+              <td>
+                <select
+                  name="audioIn"
+                  id="audioIn"
+                  class="form-control text-blue-400"
+                  formControlName="audioInId"
+                >
+                  <option
+                    *ngFor="let device of devices.audio.in"
+                    value="{{ device.id }}"
+                  >
+                    {{ device.text }}
+                  </option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>test</td>
+            </tr>
+          </ng-container>
+          <ng-container *ngIf="devices.audio.out.length > 0; else noAudioOut">
+            <tr>
+              <td><label for="audioOut">Audio Out</label></td>
+              <td>
+                <select
+                  name="audioOut"
+                  id="audioOut"
+                  class="form-control text-blue-400"
+                >
+                  <option
+                    *ngFor="let device of devices.audio.out"
+                    value="{{ device.id }}"
+                  >
+                    {{ device.text }}
+                  </option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>test2</td>
+            </tr>
+          </ng-container>
+          <ng-container *ngIf="devices.video.in.length > 0; else noVideo">
+            <tr>
+              <td><label>Video</label></td>
+              <td>
+                <div class="flex flex-wrap gap-3 p-2">
+                  <input #videoIn formControlName="videoInId" type="hidden" />
+                  <ng-container *ngFor="let device of devices.video.in">
+                    <div>
+                      <div
+                        (click)="
+                          settingsForm.controls['videoInId'].setValue(device.id)
+                        "
+                        title="{{ device.text }}"
+                        [ngClass]="{
+                          'w-52 h-48 relative border-2 cursor-pointer border-blue-500 overflow-hidden': true,
+                          ' ring-2 ring-green-400':
+                            settingsForm.controls['videoInId'].value ===
+                            device.id
+                        }"
+                      >
+                        <video
+                          [srcObject]="wrapTrack(device.track)"
+                          autoplay
+                          class="z-10 absolute w-full h-full top-0 left-0"
+                        ></video>
+                      </div>
+                      <p class="text-center">{{ device.text }}</p>
+                    </div>
+                  </ng-container>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </table>
+      </div>
+      <div
+        class="dialog-footer gap-3 p-2 border-t-2 border-blue-500 flex justify-end"
+        *ngIf="settingsForm.dirty"
+      >
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-save"></i> Save Changes
+        </button>
+
+        <button
+          type="reset"
+          class="btn btn-outline-danger"
+          (click)="closeSettings()"
+        >
+          <i class="fa fa-times"></i> Discard
+        </button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<ng-template #noVideo>
+  <tr class="w-full border-2 border-yellow-400 bg-yellow-200 text-center">
+    <td colspan="2"><i class="fa fa-info"></i> No Video input devices</td>
+  </tr>
+</ng-template>
+
+<ng-template #noAudioIn>
+  <tr class="w-full border-2 border-yellow-400 bg-yellow-200 text-center">
+    <td></td>
+    <td><i class="fa fa-info"></i> No Audio input devices</td>
+  </tr>
+</ng-template>
+
+<ng-template #noAudioOut>
+  <tr
+    class="w-full border-2 text-black border-yellow-400 bg-yellow-200 text-center"
+  >
+    <td></td>
+    <td><i class="fa fa-info"></i> No Audio output devices</td>
+  </tr>
+</ng-template>
