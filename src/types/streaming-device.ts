@@ -1,9 +1,19 @@
+export type StreamingDevice = {
+  id: string, text: string, type: 'audio' | 'video';
+};
+
 export type StreamingDevices = {
   audio: {
-    in: { id: string, text: string, track?: MediaStreamTrack }[],
-    out: { id: string, text: string, track?: MediaStreamTrack }[]
+    in: StreamingDevice[],
+    out: StreamingDevice[]
   },
   video: {
-    in: { id: string, text: string, track?: MediaStreamTrack }[]
+    in: StreamingDevice[]
   }
 };
+
+export type State = {
+  displayName: string;
+  audioDevice: StreamingDevice;
+  videoDevice: StreamingDevice;
+}
