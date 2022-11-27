@@ -1,0 +1,9 @@
+.auth-container {
+  &[open] {
+    @apply fixed top-1/2 z-50 block bg-inherit text-inherit border-blue-600 border-2 w-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-0 m-0;
+    background-color: rgba(0,0,0,.5);
+    &::backdrop{
+      @apply backdrop-blur;
+    }
+  }
+}

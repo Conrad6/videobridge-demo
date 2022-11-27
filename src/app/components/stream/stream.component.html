@@ -1,0 +1,65 @@
+<div
+  class="container relative overflow-hidden mx-auto border-2 border-blue-500 h-full w-full max-w-full main-container"
+>
+  <div
+    class="border-b-2 border-blue-500 px-2 py-3 flex justify-between items-center row-start-1 row-end-2 col-start-1 col-end-13"
+  >
+    <h2 class="h2">Test Conference</h2>
+    <div class="inline-flex justify-around">
+      <button (click)="showingSettings()" class="btn btn-primary">
+        <i class="fa fa-cog"></i> Settings
+      </button>
+    </div>
+  </div>
+
+  <div
+    [ngClass]="{
+      'border-l-2 grid items-stretch justify-items-stretch relative border-blue-500 row-start-2 col-start-11 col-end-13 h-full': true,
+      'left-full': rightPanelCollapsed,
+      'row-end-13': bottomPanelCollapsed,
+      'row-end-12': !bottomPanelCollapsed
+    }"
+  >
+    <button
+      (click)="rightPanelCollapsed = !rightPanelCollapsed"
+      class="btn-pin pos-left z-50"
+    >
+      <i
+        [ngClass]="{
+          fa: true,
+          'fa-chevron-right': !rightPanelCollapsed,
+          'fa-chevron-left': rightPanelCollapsed
+        }"
+      ></i>
+    </button>
+    <ng-container>
+      <div class="border-b-2 border-blue-500">
+        <app-conference-info></app-conference-info>
+      </div>
+    </ng-container>
+    <ng-container>
+      <app-bridge-info></app-bridge-info>
+    </ng-container>
+  </div>
+  <div
+    [ngClass]="{
+      'row-start-2 col-start-1': true,
+      'col-end-11': !rightPanelCollapsed,
+      'col-end-13': rightPanelCollapsed,
+      'row-end-13': bottomPanelCollapsed,
+      'row-end-12': !bottomPanelCollapsed
+    }"
+  >
+    <app-sessions></app-sessions>
+  </div>
+  <div
+    [ngClass]="{
+      'w-full relative bottom-0 gap-2 border-t-2 border-blue-500 row-start-12 row-end-13 col-start-1 col-end-13 flex justify-center items-center': true,
+      'top-full': bottomPanelCollapsed,
+      'top-0': !bottomPanelCollapsed
+    }"
+  >
+    <app-control-buttons></app-control-buttons>
+  </div>
+</div>
+<app-settings #settings></app-settings>

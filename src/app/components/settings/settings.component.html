@@ -91,7 +91,7 @@
               </td>
             </tr>
           </ng-container>
-          <ng-container *ngIf="devices.audio.out.length > 0; else noAudioOut">
+          <ng-container *ngIf="devices.audio.out.length > 0">
             <tr>
               <td><label for="audioOut">Audio Out</label></td>
               <td>
@@ -172,14 +172,5 @@
 <ng-template #noVideo>
   <tr class="w-full border-2 border-yellow-400 bg-yellow-200 text-center">
     <td colspan="2"><i class="fa fa-info"></i> No Video input devices</td>
-  </tr>
-</ng-template>
-
-<ng-template #noAudioOut>
-  <tr
-    class="w-full border-2 text-black border-yellow-400 bg-yellow-200 text-center"
-  >
-    <td></td>
-    <td><i class="fa fa-info"></i> No Audio output devices</td>
   </tr>
 </ng-template>

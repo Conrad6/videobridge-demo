@@ -1,0 +1,26 @@
+<div class="p-3">
+  <h3 class="h3">Select Stream Scope</h3>
+<div class="p-3 flex">
+  <ng-container *ngIf="(scopes|async)?.length;else noScopes">
+  <div (click)="selectScope(scope)" class="cursor-pointer p-3 border-transparent border-2 border-solid hover:border-double hover:border-blue-600"  *ngFor="let scope of scopes|async">
+    <figure style="background: rgba(44, 156, 231, 0.404)" class="p-2">
+      <svg [attr.data-jdenticon-value]="scope.id" width="50" height="50">
+        {{scope.name}}
+      </svg>
+      <figcaption><label><i [ngClass]="{
+        fas: true,
+        'fa-circle': true,
+        'text-green-600': scope.isOnline,
+        'text-gray-600': !scope.isOnline
+      }"></i> {{scope.isOnline ? 'Online' : 'Offline'}}</label></figcaption>
+    </figure>
+    <p>{{scope.name}}</p>
+  </div>
+</ng-container>
+</div>
+
+<ng-template #noScopes>
+  Loading...
+</ng-template>
+
+</div>

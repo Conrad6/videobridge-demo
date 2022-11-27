@@ -1,14 +1,17 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ControlButtonsComponent } from './control-buttons/control-buttons.component';
-import { ConferenceInfoComponent } from './conference-info/conference-info.component';
-import { BridgeInfoComponent } from './bridge-info/bridge-info.component';
-import { SettingsComponent } from './settings/settings.component';
-import { SessionsComponent } from './sessions/sessions.component';
+import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { AuthComponent } from './auth/auth.component';
-import { LoginComponent } from './auth/login/login.component';
-import { SignUpComponent } from './auth/sign-up/sign-up.component';
+import { BridgeInfoComponent } from './bridge-info/bridge-info.component';
+import { ConferenceInfoComponent } from './conference-info/conference-info.component';
+import { ControlButtonsComponent } from './control-buttons/control-buttons.component';
+import { SessionsComponent } from './sessions/sessions.component';
+import { SettingsComponent } from './settings/settings.component';
+import { ScopesComponent } from './auth/scopes/scopes.component';
+import { ScopeJoinComponent } from './auth/scope-join/scope-join.component';
+import { StreamComponent } from './stream/stream.component';
+import { AuthModule } from './auth/auth.module';
 
 
 @NgModule({
@@ -18,16 +21,15 @@ import { SignUpComponent } from './auth/sign-up/sign-up.component';
     BridgeInfoComponent,
     SettingsComponent,
     SessionsComponent,
-    AuthComponent,
-    LoginComponent,
-    SignUpComponent
+    StreamComponent,
   ],
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    RouterModule,
+    AuthModule
   ],
-  exports: [AuthComponent, LoginComponent, SignUpComponent,
-    SessionsComponent, ControlButtonsComponent, BridgeInfoComponent, ConferenceInfoComponent, SettingsComponent]
+  exports: [StreamComponent, ScopesComponent, ScopeJoinComponent, AuthComponent, SessionsComponent, ControlButtonsComponent, BridgeInfoComponent, ConferenceInfoComponent, SettingsComponent]
 })
 export class ComponentsModule { }

@@ -20,6 +20,13 @@ body {
 
 .btn {
   @apply text-white font-bold py-0.5 px-4 border-blue-600 border-2 transition-colors;
+  &:disabled,
+  &.btn-primary:disabled{
+    @apply bg-gray-500 text-white border-gray-500 cursor-not-allowed;
+    &:hover {
+      @apply bg-gray-500
+    }
+  }
   &:hover {
     @apply bg-blue-600;
   }
@@ -63,9 +70,12 @@ h1,h2,h3,h4,h5,h6 {
 }
 
 a {
-  @apply font-bold text-blue-400 transition-colors;
+  @apply font-bold text-blue-400 transition-colors border-2 px-3 py-2 border-transparent border-solid;
   &:hover {
-    @apply text-blue-300;
+    @apply text-blue-300 border-blue-300;
+  }
+  &.active {
+    @apply bg-blue-600 text-blue-300 font-bold;
   }
 }
 
@@ -104,8 +114,7 @@ a {
 
 .form-control {
   @apply outline-none px-2 p-1 block my-1 bg-transparent border-2 border-blue-500 w-full;
-  &:ho
-  option {
-    @apply bg-inherit;
+  &.is-invalid {
+    @apply border-red-500;
   }
 }
