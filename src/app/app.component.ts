@@ -12,7 +12,7 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('auth') auth?: AuthComponent;
   constructor(readonly authService: AuthService) { }
   ngAfterViewInit(): void {
-    this.authService.principal$.subscribe(principal => {
+    this.authService.isAuthed$.subscribe(principal => {
       if (!principal) {
         this.auth?.show();
       } else {

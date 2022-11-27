@@ -4,6 +4,7 @@ import { ScopesComponent } from './scopes/scopes.component';
 import { ScopeJoinComponent } from './scope-join/scope-join.component';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthComponent } from './auth.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const routes: Routes = [
   { path: ':id', component: ScopeJoinComponent },
@@ -14,7 +15,9 @@ const routes: Routes = [
   declarations: [AuthComponent, ScopesComponent, ScopeJoinComponent],
   imports: [
     CommonModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    FormsModule,
+    ReactiveFormsModule
   ],
   exports: [AuthComponent, ScopesComponent, ScopeJoinComponent]
 })
