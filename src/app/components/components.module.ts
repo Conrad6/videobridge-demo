@@ -12,6 +12,8 @@ import { ScopesComponent } from './auth/scopes/scopes.component';
 import { ScopeJoinComponent } from './auth/scope-join/scope-join.component';
 import { StreamComponent } from './stream/stream.component';
 import { AuthModule } from './auth/auth.module';
+import { SessionComponent } from './sessions/session/session.component';
+import { InitialAvatarComponent } from './initial-avatar/initial-avatar.component';
 
 
 @NgModule({
@@ -22,6 +24,8 @@ import { AuthModule } from './auth/auth.module';
     SettingsComponent,
     SessionsComponent,
     StreamComponent,
+    SessionComponent,
+    InitialAvatarComponent,
   ],
   imports: [
     CommonModule,

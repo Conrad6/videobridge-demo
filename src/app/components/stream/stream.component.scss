@@ -1,0 +1,12 @@
+@keyframes blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: .5;
+  }
+}
+
+.connecting {
+  animation: blink .35s ease-out infinite alternate-reverse;
+}

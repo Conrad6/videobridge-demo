@@ -11,7 +11,7 @@ import { StreamingDevices } from 'src/types/streaming-device';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
-  @ViewChild('settingsDialog') settingsDialogRef?: ElementRef;
+  @ViewChild('settingsDialog') settingsDialogRef?: ElementRef<HTMLDialogElement>;
   dotSequence = [...Array(10).keys()];
   audioContext: AudioContext;
   testingAudio = false;
@@ -21,8 +21,8 @@ export class SettingsComponent implements OnInit {
     const state = this.stateService.state.snapshot;
     this.settingsForm.setValue({
       displayName: state?.displayName,
-      audioInId: state?.audioDevice.id,
-      videoInId: state?.videoDevice.id
+      audioInId: state?.audioDevice?.id,
+      videoInId: state?.videoDevice?.id
     });
     this.settingsForm.markAsPristine({ onlySelf: true });
     settingsDialog.showModal();
@@ -87,7 +87,7 @@ export class SettingsComponent implements OnInit {
   closeSettings() {
     this.testingAudio = false;
     if (!this.settingsDialogRef) return;
-    const settingsDialog = this.settingsDialogRef.nativeElement as HTMLDialogElement;
+    const settingsDialog = this.settingsDialogRef.nativeElement;
     settingsDialog.close();
     this.stopVideoStreams();
     this.stopAudio();
@@ -124,7 +124,7 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const settingsDialog = this.settingsDialogRef?.nativeElement as HTMLDialogElement;
+    const settingsDialog = this.settingsDialogRef?.nativeElement;
     if (!settingsDialog) return;
   }
 

@@ -1,0 +1,140 @@
+@keyframes fade-out {
+  /* from {
+      opacity: 1;
+  } */
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  /* from {
+      opacity: 0;
+  } */
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up{
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes slide-down{
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.session:not(.minimal) {
+  @apply overflow-hidden;
+  .drag-bar {
+    @apply hidden;
+  }
+
+  .top-controls {
+    @apply absolute top-0 left-1/2 -translate-x-1/2;
+    animation: fade-out linear .25s forwards;
+    animation-delay: 5s;
+  }
+
+  .bottom-controls {
+    @apply absolute bottom-0 w-full;
+    animation: fade-out linear .25s forwards;
+    animation-delay: 5s;
+  }
+
+  &:hover {
+    .top-controls {
+      animation: fade-in linear .25s forwards;
+      animation-delay: 0s;
+    }
+
+    .bottom-controls {
+      animation: fade-in linear .25s forwards;
+      animation-delay: 0s;
+    }
+  }
+
+  &.undocked {
+    @apply fixed;
+    max-width: 500px;
+    max-height: 350px;
+    z-index: 12;
+    &:hover {
+      .drag-bar {
+        animation: slide-down linear .25 forwards;
+        animation-delay: 0s;
+      }
+    }
+    .drag-bar {
+      @apply absolute block top-0 w-full left-0 h-4 bg-blue-600 cursor-grab;
+      z-index: 11;
+      animation: slide-up linear .25s forwards;
+      animation-delay: 5s;
+      &:active {
+        @apply cursor-grabbing;
+      }
+    }
+
+    .top-controls {
+      @apply top-4;
+    }
+  }
+}
+
+.session.minimal {
+  min-width: 5rem;
+
+  .bottom-controls {
+    @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2;
+    animation: fade-out linear .25s forwards;
+    animation-delay: 2s;
+
+    button {
+      @apply bg-blue-400;
+      &:hover {
+        @apply bg-blue-400;
+      }
+    }
+  }
+
+  &:hover {
+    .bottom-controls {
+      animation: fade-in linear .25s forwards;
+      animation-delay: 0s;
+    }
+  }
+}
+
+.session {
+  @apply h-full border-2 border-blue-600 border-solid relative bg-black;
+  .bottom-controls,
+  .top-controls {
+    z-index: 10;
+  }
+
+  .overlay {
+    z-index: 9;
+    @apply w-full h-full relative left-0 top-0;
+  }
+
+  .bottom-controls button {
+    @apply border-none;
+    &:hover {
+      @apply bg-transparent text-blue-500;
+    }
+  }
+
+  video {
+    z-index: 8;
+    @apply w-full h-full absolute top-0 left-0;
+  }
+
+  app-initial-avatar {
+    z-index: 7;
+    @apply w-full h-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  }
+}

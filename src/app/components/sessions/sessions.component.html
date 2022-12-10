@@ -1,1 +1,15 @@
-<p>sessions works!</p>
+<div class="p-2 w-full h-full">
+  <div *ngIf="localSession$|async as session">
+    <app-session [session]="session"></app-session>
+  </div>
+  <div class="sessions w-full h-full">
+    <div *ngFor="let session of remoteSessions$|async|slice:0:8">
+      <app-session [session]="session"></app-session>
+    </div>
+    <div class="overflow w-full" *ngIf="(remoteSessions$|async)!.length>8">
+      <div *ngFor="let session of remoteSessions$|async|slice:8">
+        <app-session [session]="session" [overflow]="true"></app-session>
+      </div>
+    </div>
+  </div>
+</div>

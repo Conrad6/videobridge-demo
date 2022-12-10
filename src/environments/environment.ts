@@ -6,10 +6,7 @@ export const environment = {
   production: false,
   apiDomain: 'localhost',
   secured: true,
-  targetScope: {
-    documentId: 'ILno3hqLwy',
-    postId: 'NwQbCe9Lxa'
-  }
+  socketPath: '/ws'
 };
 
 /*

@@ -41,5 +41,4 @@ export class ScopesComponent implements OnInit {
     sessionStorage.setItem('SCOPE', JSON.stringify(scope));
     this.router.navigateByUrl(this.router.createUrlTree([scope.id]));
   }
-
 }

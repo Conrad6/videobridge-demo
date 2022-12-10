@@ -41,7 +41,7 @@ export class MediaDeviceService {
     currentDevices.video.in = [];
     from(navigator.mediaDevices.getUserMedia({ audio: true, video: true })).pipe(
       switchMap(() => from(navigator.mediaDevices.enumerateDevices())),
-      switchMap(devices => of(...devices)),
+      switchMap(devices => from(devices)),
       concatMap(device => {
         let trackStream: Observable<MediaStreamTrack>;
         if (device.kind == 'audioinput') {

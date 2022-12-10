@@ -1,0 +1,28 @@
+<div [ngClass]="{
+'session': true,
+'minimal': overflow,
+'w-full': !overflow,
+'undocked': session!.isLocal
+     }" #sessionElement *ngIf="session">
+  <div class="top-controls" *ngIf="!overflow">
+    <select name="qualitySelect" id="qualitySelect" class="form-control">
+      <option>Select Quality</option>
+    </select>
+  </div>
+  <app-initial-avatar [text]="session?.displayName"></app-initial-avatar>
+  <div (mousedown)="onMouseDown($event)"
+       class="drag-bar"></div>
+  <div class="overlay"></div>
+  <video *ngIf="overflow != true" #video [id]="session.sessionId" autoplay></video>
+  <div class="bottom-controls">
+    <div class="flex justify-between items-center">
+      <label *ngIf="!overflow" class="block">{{(session?.displayName || '')}}</label>
+      <div *ngIf="!session!.isLocal">
+        <button *ngIf="!overflow" class="btn" title="Toggle Audio"><i class="fas fa-volume-mute"></i></button>
+        <button *ngIf="!overflow" class="btn" title="Toggle Video"><i class="fas fa-video-slash"></i></button>
+        <button class="btn" title="Pin"><i class="fas fa-thumbtack"></i></button>
+<!--        <button *ngIf="!overflow" class="btn" title="Minimize"><i class="fas fa-compress-arrows-alt"></i></button>-->
+      </div>
+    </div>
+  </div>
+</div>

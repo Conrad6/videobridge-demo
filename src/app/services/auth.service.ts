@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { catchError, of, switchMap } from 'rxjs';
-import { StreamScopeInfo } from '../components/auth/scopes/scopes.component';
+import {Injectable} from '@angular/core';
+import {catchError, map, Observable, of, switchMap} from 'rxjs';
+import {StreamScopeInfo} from '../components/auth/scopes/scopes.component';
 
 @Injectable({
   providedIn: 'root'
@@ -9,14 +9,20 @@ export class AuthService {
   constructor() {
   }
 
-  get isAuthed$() {
+  get currentScope$(): Observable<StreamScopeInfo | null> {
     return of(sessionStorage.getItem('SCOPE')).pipe(
       switchMap(val => {
-        if (!val) return of(false);
+        if (!val) return of(null);
         const scope = JSON.parse(val) as StreamScopeInfo;
-        return of(scope.token != null);
+        return of(scope);
       }),
-      catchError(() => of(false))
+      catchError(() => of(null))
+    )
+  }
+
+  get isAuthed$() {
+    return this.currentScope$.pipe(
+      map(scope => !!scope && scope.token != null)
     )
   }
 }

@@ -4,7 +4,17 @@
   <div
     class="border-b-2 border-blue-500 px-2 py-3 flex justify-between items-center row-start-1 row-end-2 col-start-1 col-end-13"
   >
-    <h2 class="h2">Test Conference</h2>
+    <div>
+    <h2 class="h2"><span *ngIf="currentScope$|async as scope">{{scope.name}}</span></h2>
+      <span class="uppercase block" *ngIf="connectionStatus$|async as status"><i
+        [ngClass]="{
+      'fas fa-circle':true,
+      'text-red-500': (status == 'connectionFailed'),
+      'text-blue-500 connecting': (status == 'connecting' || status == 'retrying'),
+      'text-yellow-500':(status == 'waiting...'),
+      'text-gray-500': (status == 'idle' || status == 'disconnected'),
+      'text-green-500': (status == 'connected')}"></i> {{connectionStatus$|async}}</span>
+    </div>
     <div class="inline-flex justify-around">
       <button (click)="showingSettings()" class="btn btn-primary">
         <i class="fa fa-cog"></i> Settings

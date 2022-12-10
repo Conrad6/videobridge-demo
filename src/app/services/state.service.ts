@@ -29,6 +29,7 @@ export class StateService {
   get state() {
     return {
       snapshot: this.stateSubject.getValue(),
+      // changes: this.defaultState$
       changes: this.stateSubject.asObservable()
     }
   }
