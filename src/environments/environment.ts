@@ -7,7 +7,7 @@ export const environment = {
   apiDomain: 'localhost',
   secured: true,
   socketPath: '/ws'
-};
+} as const;
 
 /*
  * For easier debugging in development mode, you can import the following file

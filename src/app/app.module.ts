@@ -7,6 +7,7 @@ import {ComponentsModule} from './components/components.module';
 import {HttpClientModule} from '@angular/common/http';
 import {NgxsModule} from '@ngxs/store';
 import {DevicesState} from './state/devices/devices.state';
+import {ScopeState} from './state/scope/scope.state';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,10 @@ import {DevicesState} from './state/devices/devices.state';
     AppRoutingModule,
     ComponentsModule,
     HttpClientModule,
-    NgxsModule.forRoot([DevicesState])
+    NgxsModule.forRoot([
+      DevicesState,
+      ScopeState
+    ])
   ],
   providers: [],
   bootstrap: [AppComponent]

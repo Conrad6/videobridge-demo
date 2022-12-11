@@ -1,4 +1,4 @@
-export namespace Devices {
+export namespace Device {
   export class LoadByType {
     static readonly type = '[Devices] Load Devices By Type';
     constructor(public deviceType: 'audio' | 'video') {

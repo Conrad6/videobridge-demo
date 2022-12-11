@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { combineLatestWith, concat, forkJoin, map, mergeMap, of, switchMap } from 'rxjs';
 import { MediaDeviceService } from 'src/app/services/media-device.service';
-import { StateService } from 'src/app/services/state.service';
+import { ScopeService } from 'src/app/services/scope.service';
 import { StreamingDevices } from 'src/types/streaming-device';
 
 @Component({
@@ -96,7 +96,7 @@ export class SettingsComponent implements OnInit {
   devices: StreamingDevices
   settingsForm: FormGroup;
 
-  constructor(private stateService: StateService,
+  constructor(private stateService: ScopeService,
     readonly deviceService: MediaDeviceService,
     formBuilder: FormBuilder) {
     this.audioContext = new AudioContext();

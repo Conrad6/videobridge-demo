@@ -12,7 +12,7 @@ import {
   switchMap,
   tap
 } from 'rxjs';
-import {StateService} from './state.service';
+import {ScopeService} from './scope.service';
 
 export type SessionTrackUpdate = { oldTrack?: MediaStreamTrack, newTrack?: MediaStreamTrack, kind: 'audio' | 'video' };
 export type TrackUpdateNotification = { sessionId: string, update: SessionTrackUpdate };
@@ -27,7 +27,7 @@ export class SessionStreamService {
   private readonly trackUpdatedNotificationPublisher: Connectable<TrackUpdateNotification>;
   private readonly trackUpdateNotificationSubscription: Subscription;
 
-  constructor(private readonly stateService: StateService) {
+  constructor(private readonly stateService: ScopeService) {
     this.sessionStreamMap = {};
     this.trackUpdatedChannel = new Subject<TrackUpdateNotification>();
     this.trackUpdatedNotificationPublisher = connectable(this.trackUpdatedChannel);
