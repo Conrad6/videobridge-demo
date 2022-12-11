@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {catchError, map, Observable, of, switchMap} from 'rxjs';
-import {StreamScopeInfo} from '../components/auth/scopes/scopes.component';
+import {StreamScopeInfo} from '../../types';
 
 @Injectable({
   providedIn: 'root'

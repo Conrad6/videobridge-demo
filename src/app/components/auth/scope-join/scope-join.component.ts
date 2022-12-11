@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, take, switchMap, combineLatestWith, of } from 'rxjs';
 import { IPrincipal } from 'src/app/services/principal.interface';
 import { environment } from 'src/environments/environment';
-import { StreamScopeInfo } from '../scopes/scopes.component';
+import {StreamScopeInfo} from '../../../../types';
 
 @Component({
   selector: 'app-scope-join',
