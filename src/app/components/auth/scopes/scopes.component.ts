@@ -1,17 +1,9 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
-import { environment } from 'src/environments/environment';
-
-export type StreamScopeInfo = {
-  documentId: string;
-  id: string;
-  name: string;
-  isOnline: boolean;
-  connectedMembers: number;
-  token?: string;
-}
+import {HttpClient} from '@angular/common/http';
+import {Component, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
+import {BehaviorSubject} from 'rxjs';
+import {environment} from 'src/environments/environment';
+import {StreamScopeInfo} from '../../../../types';
 
 @Component({
   selector: 'app-scopes',
@@ -20,8 +12,9 @@ export type StreamScopeInfo = {
 })
 export class ScopesComponent implements OnInit {
   scopes: BehaviorSubject<StreamScopeInfo[]>;
+
   constructor(private readonly httpClient: HttpClient,
-    private readonly router: Router) {
+              private readonly router: Router) {
     this.scopes = new BehaviorSubject<StreamScopeInfo[]>([]);
   }
 
