@@ -32,26 +32,7 @@ export class SessionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sessionWatchSubscription = this.sessionStreamService.watchSessionTrackChanges(this.session!.sessionId)
-      .subscribe(update => {
-        if(update.kind == 'audio' && this.session!.isLocal) return;
-        if (!update.newTrack) {
-          this.video!.nativeElement.srcObject = null;
-          return;
-        }
-        const currentStream = this.video?.nativeElement.srcObject as MediaStream | null;
-        if (currentStream == null) {
-          this.video!.nativeElement.srcObject = new MediaStream([update.newTrack]);
-          return;
-        }
-        const currentTrack = update.oldTrack
-        if (!currentTrack) {
-          currentStream.addTrack(update.newTrack);
-          return;
-        }
-        currentStream.removeTrack(currentTrack);
-        currentStream.addTrack(update.newTrack);
-      });
+
   }
 
   closeDrag() {

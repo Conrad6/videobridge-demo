@@ -36,7 +36,6 @@ export class StreamComponent implements OnDestroy, OnInit {
 
   showingSettings() {
     if (!this.settings) return;
-    this.settings.showSettings();
   }
 
 }

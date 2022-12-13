@@ -9,14 +9,14 @@
       <option>Select Quality</option>
     </select>
   </div>
-  <app-initial-avatar [text]="session?.displayName"></app-initial-avatar>
+  <app-initial-avatar [text]="session.displayName"></app-initial-avatar>
   <div (mousedown)="onMouseDown($event)"
        class="drag-bar"></div>
   <div class="overlay"></div>
   <video *ngIf="overflow != true" #video [id]="session.sessionId" autoplay></video>
   <div class="bottom-controls">
     <div class="flex justify-between items-center">
-      <label *ngIf="!overflow" class="block">{{(session?.displayName || '')}}</label>
+      <label *ngIf="!overflow" class="block">{{(session.displayName || '')}}</label>
       <div *ngIf="!session!.isLocal">
         <button *ngIf="!overflow" class="btn" title="Toggle Audio"><i class="fas fa-volume-mute"></i></button>
         <button *ngIf="!overflow" class="btn" title="Toggle Video"><i class="fas fa-video-slash"></i></button>

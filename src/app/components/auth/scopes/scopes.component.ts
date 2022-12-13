@@ -30,7 +30,7 @@ export class ScopesComponent implements OnInit {
     });
   }
 
-  selectScope(scope: StreamScopeInfo) {
+  selectScope(scope: StreamScopeInfo)  {
     sessionStorage.setItem('SCOPE', JSON.stringify(scope));
     this.router.navigateByUrl(this.router.createUrlTree([scope.id]));
   }

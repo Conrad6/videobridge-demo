@@ -1,8 +1,8 @@
-import {StreamScopeInfo} from "src/app/components/auth/scopes/scopes.component";
 import {environment} from "src/environments/environment";
 import {AbstractSignaler} from "./abstract.signaler";
 import {Signal} from "./signal.type";
 import {timer} from 'rxjs';
+import {StreamScopeInfo} from '../types';
 
 export class WebSocketSignaler extends AbstractSignaler {
 

@@ -8,6 +8,7 @@ import {HttpClientModule} from '@angular/common/http';
 import {NgxsModule} from '@ngxs/store';
 import {DevicesState} from './state/devices/devices.state';
 import {ScopeState} from './state/scope/scope.state';
+import {SessionState} from './state/sessions/session.state';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import {ScopeState} from './state/scope/scope.state';
     NgxsModule.forRoot([
       DevicesState,
       ScopeState,
+      SessionState
     ])
   ],
   providers: [],

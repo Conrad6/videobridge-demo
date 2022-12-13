@@ -56,6 +56,18 @@ export class SessionState {
     return (state: SessionsStateModel) => state.sessions.find(session => session.session.sessionId === id)
   }
 
+  @Selector()
+  static localSession(state: SessionsStateModel) {
+    return state.sessions.map(({session}) => session)
+      .find(session => session.isLocal) as LocalSessionModel | undefined;
+  }
+
+  @Selector()
+  static remoteSessions(state: SessionsStateModel) {
+    return state.sessions.filter(({session}) => !session.isLocal)
+      .map(({session}) => session as RemoteSessionModel);
+  }
+
   @Action(ParametersReceived)
   onParametersReceived(context: StateContext<SessionsStateModel>, {parameters}: ParametersReceived) {
     let sessionModel: SessionModel;

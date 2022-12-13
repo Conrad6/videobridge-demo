@@ -1,20 +1,12 @@
 import {Component, OnInit} from '@angular/core';
+import {merge, Observable} from 'rxjs';
+import {Select, Store} from '@ngxs/store';
 import {
-  BehaviorSubject,
-  defaultIfEmpty, distinctUntilChanged, distinctUntilKeyChanged,
-  filter,
-  first,
-  from,
-  map,
-  mergeMap,
-  Observable, of,
-  reduce,
-  scan, switchScan,
-  toArray
-} from 'rxjs';
-import {SessionParameters} from 'src/types/session-parameters';
-import {SessionService} from '../../services/session.service';
-import {zip} from 'rxjs/internal/operators/zip';
+  LocalSessionModel,
+  RemoteSessionModel,
+  SessionsStateModel,
+  SessionState
+} from '../../state/sessions/session.state';
 
 @Component({
   selector: 'app-sessions',
@@ -23,35 +15,15 @@ import {zip} from 'rxjs/internal/operators/zip';
 })
 export class SessionsComponent implements OnInit {
 
-  private sessions: BehaviorSubject<SessionParameters[]>;
+  @Select(SessionState.allSessions) sessions$!: Observable<SessionsStateModel[]>;
+  @Select(SessionState.remoteSessions) remoteSessions$!: Observable<RemoteSessionModel[]>;
+  @Select(SessionState.localSession) localSession$!: Observable<LocalSessionModel>;
 
-  constructor(private readonly sessionService: SessionService) {
-    this.sessions = new BehaviorSubject<SessionParameters[]>([]);
-  }
-
-  get remoteSessions$() {
-    return this.sessions.pipe(
-      map(sessions => sessions.filter(session => !session.isLocal)),
-    );
-  }
-
-  get localSession$(): Observable<SessionParameters> {
-    return this.sessions.pipe(
-      mergeMap(sessions => from(sessions)),
-      filter(session => session.isLocal),
-      first()
-    );
+  constructor(private readonly store: Store) {
   }
 
   ngOnInit(): void {
-    this.sessionService.allSessions$.pipe(
-      distinctUntilKeyChanged('sessionId'),
-      scan((acc, session) => {
-        return [...acc, session];
-      }, Array<SessionParameters>()),
-    ).subscribe(sessions => {
-      this.sessions.next(sessions);
-    });
+    merge(this.sessions$).subscribe(x => console.log(x));
   }
 
 }

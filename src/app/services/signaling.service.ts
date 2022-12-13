@@ -3,7 +3,7 @@ import {environment} from 'src/environments/environment';
 import {ISignaler} from 'src/signaling';
 import {IndicatorSignaler} from 'src/signaling/indicator.signaler';
 import {WebSocketSignaler} from 'src/signaling/websocket.signaler';
-import {StreamScopeInfo} from '../components/auth/scopes/scopes.component';
+import {StreamScopeInfo} from '../../types';
 
 @Injectable({
   providedIn: 'root'
