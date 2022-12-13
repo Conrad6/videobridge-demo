@@ -1,387 +1,225 @@
 import {Injectable} from '@angular/core';
 import {SignalingService} from './signaling.service';
-import {eventNames} from '../../types/eventNames';
+import * as mediasoup from 'mediasoup-client';
 import {
-  BehaviorSubject,
-  combineLatestWith,
-  connectable,
-  Connectable,
+  AsyncSubject,
+  catchError,
   EMPTY,
   filter,
-  first,
-  forkJoin,
   from,
-  fromEvent,
-  map, Observable,
+  map, merge,
+  Observable,
   of,
   switchMap,
   take,
-  tap, zip
+  tap,
+  throwError
 } from 'rxjs';
-import {SessionParameters, TransportParameters} from '../../types/session-parameters';
-import * as mediasoup from 'mediasoup-client';
-import {SessionStreamService} from './session-stream.service';
-import {AuthService} from './auth.service';
+import {eventNames, SessionParameters, SimulcastOptions, TransportParameters} from '../../types';
+import {Store} from '@ngxs/store';
+import {Sessions} from '../state/sessions/session.actions';
+import Device = Sessions.Session.Device;
+import Transport = Sessions.Session.Transport;
+import Producer = Sessions.Session.Producer;
+import ParametersReceived = Sessions.Session.Internal.ParametersReceived;
+import RemoteStarted = Sessions.Session.Producer.RemoteStarted;
+import RemoteStopped = Sessions.Session.Producer.RemoteStopped;
+import ServerSideCreated = Sessions.Session.Consumer.ServerSideCreated;
 
 @Injectable({providedIn: 'root'})
 export class SessionService {
-  private readonly sessionSubject: BehaviorSubject<SessionParameters[]>;
-  private readonly sessionPublisher: Connectable<SessionParameters[]>;
-  private readonly sessionDeviceMap: { [sessionId: string]: mediasoup.types.Device };
-  private readonly sessionTransportMap: { [sessionId: string]: mediasoup.types.Transport };
-  private readonly sessionProducerMap: {
-    [sessionId: string]: {
-      audio?: { id?: string, producer?: mediasoup.types.Producer },
-      video?: { id?: string, producer?: mediasoup.types.Producer }
-    }
-  };
-  private readonly sessionConsumerMap: {
-    [sessionId: string]: {
-      audio?: { id?: string, consumer?: mediasoup.types.Consumer },
-      video?: { id?: string, consumer?: mediasoup.types.Consumer }
-    }
-  };
+  constructor(private readonly signalingService: SignalingService,
+              private readonly store: Store) {
+    this.handleRemoteSignals();
+  }
 
-  constructor(private readonly authService: AuthService,
-              private readonly signalingService: SignalingService,
-              private readonly sessionStreamService: SessionStreamService) {
-    this.sessionSubject = new BehaviorSubject<SessionParameters[]>([]);
-    this.sessionPublisher = connectable(this.sessionSubject);
-    this.sessionPublisher.connect();
-    this.sessionDeviceMap = {};
-    this.sessionTransportMap = {};
-    this.sessionProducerMap = {};
-    this.sessionConsumerMap = {};
-    this.signalingService.status$.pipe(
-      filter(status => status == 'connected'),
-      take(1)
-    ).subscribe(() => {
-      this.setupEventHandlers();
+  private handleRemoteSignals() {
+    this.handleSessionParametersSignals();
+    this.handleRemoteProducerUpdateSignals();
+    this.handleRemoteConsumerUpdateSignals();
+  }
+
+  private handleRemoteConsumerUpdateSignals() {
+    // Handle remote consumer creation.
+    this.signalingService.signalStream$.pipe(
+      filter(({event}) => event === eventNames.consumerCreated),
+      map(({data: {id, kind, producerId, sessionId, rtpParameters}}) => ({
+        id: id as string,
+        type: kind as 'audio' | 'video',
+        producerId: producerId as string,
+        sessionId: sessionId as string,
+        rtpParameters: rtpParameters as mediasoup.types.RtpParameters
+      }))
+    ).subscribe(parameters => {
+      this.store.dispatch(new ServerSideCreated(
+        parameters.sessionId,
+        parameters.id,
+        parameters.producerId,
+        parameters.type,
+        parameters.rtpParameters
+      ));
     });
   }
 
-  get allSessions$(): Observable<SessionParameters> {
-    return this.sessionPublisher.pipe(
-      switchMap(sessions => from(sessions))
+  private handleRemoteProducerUpdateSignals() {
+    // Handle remote producer creation.
+    this.signalingService.signalStream$.pipe(
+      filter(({event}) => event === eventNames.newRemoteProducer),
+      map(({data: {producerId, sessionId}}) => ({
+        producerId: producerId as string,
+        sessionId: sessionId as string
+      }))
+    ).subscribe(({producerId, sessionId}) => {
+      this.store.dispatch(new RemoteStarted(sessionId, producerId));
+    });
+
+    // Handle remote producer closure.
+    this.signalingService.signalStream$.pipe(
+      filter(({event}) => event === eventNames.remoteProducerClosed),
+      map(({data: {sessionId, kind}}) => ({sessionId: sessionId as string, kind: kind as 'audio' | 'video'}))
+    ).subscribe(({sessionId, kind}) => {
+      this.store.dispatch(new RemoteStopped(sessionId, kind));
+    });
+  }
+
+  private handleSessionParametersSignals() {
+    // Handle Parameters for publish Session.
+    const localSessionStream$ = this.signalingService.signalStream$.pipe(
+      filter(({event}) => event === eventNames.publishParams),
+      map(({data}) => ({...data, isLocal: true}) as SessionParameters),
+    );
+
+    // Handler Parameters for subscribed Sessions.
+    const remoteSessionStream$ = this.signalingService.signalStream$.pipe(
+      filter(({event}) => event === eventNames.consumeParams),
+      map(({data}) => ({...data, isLocal: false}) as SessionParameters)
+    );
+
+    merge(localSessionStream$, remoteSessionStream$).subscribe(parameters => {
+      this.store.dispatch(new ParametersReceived(parameters));
+    });
+  }
+
+  startSession(sessionParameters: SessionParameters) {
+    const subject = new AsyncSubject<void>();
+
+    this.createDevice(sessionParameters.sessionId).pipe(
+      switchMap(device => {
+        return this.loadDevice(sessionParameters.sessionId, device, sessionParameters.deviceParameters.rtpCapabilities).pipe(
+          switchMap(() => this.createTransport(sessionParameters.sessionId, device, sessionParameters.isLocal ? 'send' : 'recv', sessionParameters.deviceParameters.transportParameters))
+        )
+      })
+    ).subscribe({
+      next: () => subject.next(),
+      error: (error: Error) => subject.error(error),
+      complete: () => subject.complete()
+    });
+
+    return subject.asObservable();
+  }
+
+  private createTransport(sessionId: string, device: mediasoup.types.Device, type: 'send' | 'recv', transportParameters: TransportParameters) {
+    let transportStream$: Observable<mediasoup.types.Transport>;
+    if (type == 'send') transportStream$ = of(device.createSendTransport(transportParameters));
+    else transportStream$ = of(device.createRecvTransport(transportParameters))
+
+    return transportStream$.pipe(
+      tap((transport) => this.store.dispatch(new Transport.Created('succeeded', undefined, sessionId, transport))),
+      tap(transport => this.handleTransportEvents(sessionId, transport)),
+      catchError((error) => {
+        this.store.dispatch(new Transport.Created('failed', error.message, sessionId, undefined));
+        return throwError(() => error);
+      })
     );
   }
 
-  private getLocalSessionProducer(kind: mediasoup.types.MediaKind) {
-    return this.allSessions$.pipe(
-      filter(session => session.isLocal),
-      first(),
-      switchMap(session => of(this.sessionProducerMap[session.sessionId]).pipe(
-        map(m => kind == 'audio' ? m.audio : m.video),
-        map(m => m?.producer),
-        combineLatestWith(of(session))
-      ))
-    )
-  }
+  private handleTransportEvents(sessionId: string, transport: mediasoup.types.Transport) {
 
-  stopLocalSessionProducer(kind: mediasoup.types.MediaKind) {
-    this.getLocalSessionProducer(kind).pipe(
-      filter(([producer]) => !!producer)
-    ).subscribe(([producer]) => {
-      producer?.close();
+    transport.on('connectionstatechange', (newState: mediasoup.types.ConnectionState) => {
+      if (newState == 'connected')
+        this.store.dispatch(new Transport.Connected(sessionId));
+      else if (newState == 'closed')
+        this.store.dispatch(new Transport.Closed('succeeded', undefined, sessionId));
     });
-  }
 
-  pauseLocalSessionProducer(kind: mediasoup.types.MediaKind) {
-    this.allSessions$.pipe(
-      filter(session => session.isLocal),
-      first(),
-      switchMap(session => of(this.sessionProducerMap[session.sessionId]).pipe(
-          map(m => kind == 'audio' ? m.audio : m.video),
-          map(m => m?.producer),
-          combineLatestWith(of(session))
-        )
-      )
-    ).subscribe(([producer]) => {
-      producer?.pause();
-    });
-  }
-
-  private addSession(sessionParams: SessionParameters) {
-    const temp = this.sessionSubject.getValue();
-    temp.push(sessionParams);
-    this.sessionSubject.next(temp);
-  }
-
-  private removeSession(sessionId: string) {
-    const temp = this.sessionSubject.getValue();
-    this.sessionSubject.next(temp.filter(x => x.sessionId !== sessionId));
-  }
-
-  private createSessionConsumer(sessionId: string, consumerParameters: mediasoup.types.ConsumerOptions) {
-    const transport = this.sessionTransportMap[sessionId];
-    return from(transport.consume(consumerParameters)).pipe(
-      tap(consumer => {
-        let entry = this.sessionConsumerMap[sessionId];
-        const map = {id: consumer.id, consumer};
-        if (!entry) {
-          entry = {};
-          if (consumer.kind == 'audio')
-            entry.audio = map;
-          if (consumer.kind == 'video')
-            entry.video = map;
-          return;
-        }
-        if (consumer.kind == 'audio')
-          entry.audio = map;
-        if (consumer.kind == 'video')
-          entry.video = map;
-
-        fromEvent(consumer.observer, 'close').subscribe(() => {
-          const entry = this.sessionConsumerMap[sessionId];
-          if (!entry) return;
-          if (consumer.kind == 'audio')
-            this.sessionConsumerMap[sessionId].audio = undefined;
-          if (consumer.kind == 'video')
-            this.sessionConsumerMap[sessionId].video = undefined;
-          this.sessionStreamService.removeSessionTrack(sessionId, consumer.kind);
-        });
-        this.sessionStreamService.setSessionTrack(sessionId, consumer.kind, consumer.track);
-      })
-    )
-  }
-
-  private handleServerConsumerCreatedEvent() {
-    this.signalingService.signalStream$.pipe(
-      filter(({event}) => event === eventNames.createConsumer),
-      switchMap(({data: {sessionId, consumerParameters}}) => {
-        return this.createSessionConsumer(sessionId, consumerParameters);
-      })
-    ).subscribe((consumer) => {
-      console.log(`Consumer::${consumer.id} created`);
-    })
-  }
-
-  private handleRemoteProducerCreatedEvent() {
-    this.signalingService.signalStream$.pipe(
-      filter(({event}) => event === eventNames.remoteProducer),
-    ).subscribe(({data: {producerId, sessionId}}) => {
-      const rtpCapabilities = this.sessionDeviceMap[sessionId]?.rtpCapabilities;
-      if (!rtpCapabilities) {
-        console.error(`Cannot request for server-side consumer to be created. Reason: No device found for session${sessionId}`);
-        return;
-      }
-      this.signalingService.send(eventNames.createConsumer, {sessionId, producerId, rtpCapabilities});
-    })
-  }
-
-  private handleLocalSessionEvent() {
-    this.signalingService.signalStream$.pipe(
-      filter(({event}) => event === eventNames.publishParams),
-      map(({data: params}) => params as SessionParameters)
-    ).subscribe(params => {
-      this.addSession({...params, isLocal: true});
-      this.startLocalPublishSession(params);
-    });
-  }
-
-  private handleRemoteSessionEvent() {
-    this.signalingService.signalStream$.pipe(
-      filter(({event}) => event === eventNames.consumeParams),
-      map(({data: params}) => params as SessionParameters)
-    ).subscribe(params => {
-      this.addSession({...params, isLocal: false});
-      this.startRemoteSession(params);
-    });
-  }
-
-  private createSessionProducer(sessionId: string,
-                                transport: mediasoup.types.Transport,
-                                track: MediaStreamTrack, options?: any) {
-    if (transport.direction == 'recv') {
-      console.warn('Invalid transport type for producer');
-      return EMPTY;
-    }
-    return from(transport.produce({...(options || {}), track})).pipe(
-      tap(producer => {
-        const entry = this.sessionProducerMap[sessionId];
-        entry.audio = {...(entry.audio || {}), producer};
-        entry.video = {...(entry.video || {}), producer};
-        fromEvent(producer.observer, 'close').subscribe(() => {
-          console.log(`Producer::${producer.id} closed`);
-          this.sessionStreamService.removeSessionTrack(sessionId, producer.kind);
-          if (producer.kind == 'video') {
-            entry.video = undefined;
-            if (!entry.audio) {
-              delete this.sessionProducerMap[sessionId];
-            }
-          } else {
-            entry.audio = undefined;
-            if (!entry.video) {
-              delete this.sessionProducerMap[sessionId];
-            }
-          }
-        });
-        console.log(`New Producer::${producer.id} created`);
-      })
-    )
-  }
-
-  private startLocalPublishSession(params: SessionParameters) {
-    this.createDevice(params.sessionId, params.deviceParameters.rtpCapabilities).pipe(
-      switchMap(device => {
-        return this.createSendTransport(params.sessionId, params.deviceParameters.transportParameters, device).pipe(
-          switchMap(transport => this.sessionStreamService.getLocalPublishTracks$(params.sessionId).pipe(combineLatestWith(of(transport)))),
-          switchMap(([{audio, video}, transport]) => {
-            return zip(
-              this.createSessionProducer(params.sessionId, transport, audio),
-              this.createSessionProducer(params.sessionId, transport, video, params.media?.video?.simulcast)
-            );
-          })
-        );
-      })
-    ).subscribe(([videoProducer]) => {
-      console.log(`Session::${params.sessionId} producers created. Video::${videoProducer.id}`);
-    });
-  }
-
-  private startRemoteSession(params: SessionParameters) {
-    this.createDevice(params.sessionId, params.deviceParameters.rtpCapabilities).pipe(
-      switchMap(device => this.createReceiveTransport(params.sessionId, params.deviceParameters.transportParameters, device)),
-    ).subscribe(() => {
-      const consumableAudioProducerId = params.consumableProducers?.audio;
-      const consumableVideoProducerId = params.consumableProducers?.video;
-      if (consumableAudioProducerId != null && consumableAudioProducerId != '')
-        this.signalingService.send(eventNames.createConsumer, {
-          sessionId: params.sessionId,
-          producerId: consumableAudioProducerId
-        });
-      if (consumableVideoProducerId != null && consumableVideoProducerId != '')
-        this.signalingService.send(eventNames.createConsumer, {
-          sessionId: params.sessionId,
-          producerId: consumableVideoProducerId
-        });
-      console.log(`Remote session::${params.sessionId} started by ${params.displayName}`);
-    });
-  }
-
-  private createReceiveTransport(_sessionId: string, parameters: TransportParameters, device: mediasoup.types.Device) {
-    return of(device).pipe(
-      switchMap(device => {
-        const transport = device.createRecvTransport(parameters);
-        this.handleTransportDefaultEvents(_sessionId, transport);
-        return of(transport);
-      })
-    )
-  }
-
-  private handleTransportDefaultEvents(sessionId: string, transport: mediasoup.types.Transport) {
-    this.sessionTransportMap[sessionId] = transport;
     transport.on('connect', ({dtlsParameters}, callback, errBack) => {
       try {
         this.signalingService.send(eventNames.transportConnect, {transportId: transport.id, dtlsParameters});
         callback();
-      } catch (e) {
-        errBack(e as Error);
-        console.error(e);
+      } catch (error) {
+        console.error(error);
+        errBack(error as Error);
       }
     });
-    fromEvent(transport.observer, 'close').subscribe(() => {
-      console.log(`Transport::${transport.id} closed`);
-      delete this.sessionTransportMap[sessionId];
+
+    if (transport.direction != 'recv') return;
+    transport.on('produce', ({kind, rtpParameters}, callback, errBack) => {
+      this.signalingService.signalStream$.pipe(
+        filter(({event}) => event == eventNames.producerCreated),
+        take(1)
+      ).subscribe({
+        next: ({data: {producerId, sessionId}}) => {
+          callback({id: producerId});
+          this.store.dispatch(new Producer.ServerSideCreated(sessionId, producerId));
+        },
+        error: (error: Error) => {
+          console.error(error);
+          errBack(error);
+        }
+      });
+      this.signalingService.send(eventNames.createProducer, {sessionId, kind, rtpParameters});
     });
   }
 
-  private createSendTransport(_sessionId: string, parameters: TransportParameters, device: mediasoup.types.Device) {
-    return of(device).pipe(
-      switchMap(device => {
-        const transport = device.createSendTransport(parameters);
-        this.handleTransportDefaultEvents(_sessionId, transport);
-        transport.on('produce', ({kind, rtpParameters}, callback, errBack) => {
-          this.signalingService.signalStream$.pipe(
-            filter(({event}) => event === eventNames.createProducer),
-            filter(({data: {sessionId}}) => sessionId === _sessionId)
-          ).subscribe({
-            next: ({data: {producerId}}) => {
-              callback({id: producerId});
-              const entry = this.sessionProducerMap[_sessionId];
-              if (kind == 'audio') {
-                this.sessionProducerMap[_sessionId] = {
-                  ...(entry || {}),
-                  audio: {...(entry?.audio || {}), id: producerId}
-                };
-              } else {
-                this.sessionProducerMap[_sessionId] = {
-                  ...(entry || {}),
-                  video: {...(entry?.video || {}), id: producerId}
-                };
-              }
-            },
-            error: (error: Error) => {
-              errBack(error);
-            }
-          });
-          this.signalingService.send(eventNames.createProducer, {sessionId: _sessionId, kind, rtpParameters});
-        });
-        return of(transport);
-      }),
-    )
-  }
-
-  private createDevice(sessionId: string, rtpCapabilities: mediasoup.types.RtpCapabilities) {
-    return of(new mediasoup.types.Device()).pipe(
-      switchMap(device => from(device.load({routerRtpCapabilities: rtpCapabilities})).pipe(
-        map(() => device)
-      )),
-      tap(device => this.sessionDeviceMap[sessionId] = device)
+  private createDevice(sessionId: string) {
+    return EMPTY.pipe(
+      switchMap(() => of(new mediasoup.types.Device)),
+      tap(device => {
+        this.store.dispatch(new Device.Created('succeeded', undefined, sessionId, device));
+      })
     );
   }
 
-  private setupEventHandlers() {
-    this.handleLocalSessionEvent();
-    this.handleRemoteSessionEvent();
-    this.handleRemoteSessionClosedEvent();
-    this.handleRemoteProducerClosedEvent();
-    this.handleRemoteProducerCreatedEvent();
-    this.handleServerConsumerCreatedEvent();
-  }
-
-  private handleRemoteProducerClosedEvent() {
-    this.signalingService.signalStream$.pipe(
-      filter(({event}) => event === eventNames.producerClosed),
-      switchMap(({data: {sessionId, kind}}) => {
-        return EMPTY.pipe(
-          map(() => {
-            if (kind === 'audio')
-              return this.sessionConsumerMap[sessionId]?.audio;
-            else return this.sessionConsumerMap[sessionId]?.video;
-          }),
-          filter(map => !!map),
-          filter(map => !!map!.consumer),
-          filter(map => map!.consumer!.kind === kind)
-        )
+  private loadDevice(sessionId: string, device: mediasoup.types.Device, rtpCapabilities: mediasoup.types.RtpCapabilities) {
+    return from(device.load({routerRtpCapabilities: rtpCapabilities})).pipe(
+      tap(() => this.store.dispatch(new Device.Loaded('succeeded', undefined, sessionId))),
+      catchError((error: Error) => {
+        this.store.dispatch(new Device.Loaded('failed', error.message, sessionId));
+        return EMPTY;
       })
-    ).subscribe((map) => {
-      map?.consumer?.close();
-    });
+    );
   }
 
-  private closeSessionConsumer(sessionId: string, kind: 'audio' | 'video') {
-    const entry = this.sessionConsumerMap[sessionId];
-    if (!entry) return;
-    if (kind == 'audio')
-      entry.audio?.consumer?.close();
-    if (kind == 'video')
-      entry.video?.consumer?.close();
+  private _createProducer(transport: mediasoup.types.Transport,
+                          track: MediaStreamTrack,
+                          simulcastOptions?: SimulcastOptions) {
+    const options = {...(simulcastOptions || {}), track};
+    return from(transport.produce(options));
   }
 
-  private closeSessionTransport(sessionId: string) {
-    const transport = this.sessionTransportMap[sessionId];
-    transport?.close();
+  createProducer(sessionId: string, track: MediaStreamTrack, transport?: mediasoup.types.Transport, simulcastOptions?: SimulcastOptions) {
+    return of(track).pipe(
+      switchMap(_track => {
+        if (!transport) return throwError(() => new Error(`Transport required to create producer!`));
+        return this._createProducer(transport, track, simulcastOptions);
+      })
+    );
   }
 
-  private handleRemoteSessionClosedEvent() {
-    this.signalingService.signalStream$.pipe(
-      filter(signal => signal.event === eventNames.remoteSessionEnd)
-    ).subscribe(({data: sessionId}) => {
-      this.closeSessionConsumer(sessionId, 'audio');
-      this.closeSessionConsumer(sessionId, 'video');
-      this.closeSessionTransport(sessionId);
-      this.removeSession(sessionId);
-    });
+  createConsumer(transport: mediasoup.types.Transport, type: 'audio' | 'video', consumerId: string, producerId: string, rtpParameters: mediasoup.types.RtpParameters) {
+    return from(transport.consume({
+      id: consumerId,
+      kind: type,
+      producerId,
+      rtpParameters
+    }))
+  }
+
+  pauseRemoteConsumer(sessionId: string, consumerId: string) {
+    this.signalingService.send(eventNames.pauseConsumer, {sessionId, consumerId});
+  }
+
+  resumeRemoteConsumer(sessionId: string, consumerId: string) {
+    this.signalingService.send(eventNames.resumeConsumer, {sessionId, consumerId})
   }
 }

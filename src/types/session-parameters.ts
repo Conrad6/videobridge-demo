@@ -7,7 +7,17 @@ export type TransportParameters = {
   iceCandidates: mediasoup.types.IceCandidate[];
 };
 
-export type SessionParameters = {
+export type SimulcastOptions = {
+  encodings: {
+    rid: string;
+    maxBitrate: number;
+    scalabilityMode: string;
+    label?: string;
+  }[];
+  codecOptions?: any;
+};
+
+export interface SessionParameters {
   consumableProducers?: { audio?: string; video?: string };
   priority?: 'normal' | 'high';
   sessionId: string;
@@ -21,15 +31,7 @@ export type SessionParameters = {
   media?: {
     video?: {
       source: "client" | "remote";
-      simulcast: {
-        encodings: {
-          rid: string;
-          maxBitrate: number;
-          scalabilityMode: string;
-          label?: string;
-        }[];
-        codecOptions?: any;
-      };
+      simulcast: SimulcastOptions;
       codec: string;
     };
     audio?: {

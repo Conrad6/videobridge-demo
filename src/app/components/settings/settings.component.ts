@@ -11,7 +11,9 @@ import { StreamingDevices } from 'src/types/streaming-device';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
-  @ViewChild('settingsDialog') settingsDialogRef?: ElementRef<HTMLDialogElement>;
+  ngOnInit(): void {
+  }
+  /*@ViewChild('settingsDialog') settingsDialogRef?: ElementRef<HTMLDialogElement>;
   dotSequence = [...Array(10).keys()];
   audioContext: AudioContext;
   testingAudio = false;
@@ -143,5 +145,5 @@ export class SettingsComponent implements OnInit {
       this.settingsForm.markAsPristine({ onlySelf: true });
       this.closeSettings();
     });
-  }
+  }*/
 }

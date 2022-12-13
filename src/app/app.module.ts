@@ -20,7 +20,7 @@ import {ScopeState} from './state/scope/scope.state';
     HttpClientModule,
     NgxsModule.forRoot([
       DevicesState,
-      ScopeState
+      ScopeState,
     ])
   ],
   providers: [],
