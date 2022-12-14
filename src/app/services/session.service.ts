@@ -7,7 +7,8 @@ import {
   EMPTY,
   filter,
   from,
-  map, merge,
+  map,
+  merge,
   Observable,
   of,
   switchMap,
@@ -25,6 +26,7 @@ import ParametersReceived = Sessions.Session.Internal.ParametersReceived;
 import RemoteStarted = Sessions.Session.Producer.RemoteStarted;
 import RemoteStopped = Sessions.Session.Producer.RemoteStopped;
 import ServerSideCreated = Sessions.Session.Consumer.ServerSideCreated;
+import Ended = Sessions.Session.Internal.Ended;
 
 @Injectable({providedIn: 'root'})
 export class SessionService {
@@ -41,7 +43,7 @@ export class SessionService {
 
   private handleRemoteConsumerUpdateSignals() {
     // Handle remote consumer creation.
-    this.signalingService.signalStream$.pipe(
+    this.signalingService.signalStream$?.pipe(
       filter(({event}) => event === eventNames.consumerCreated),
       map(({data: {id, kind, producerId, sessionId, rtpParameters}}) => ({
         id: id as string,
@@ -63,7 +65,7 @@ export class SessionService {
 
   private handleRemoteProducerUpdateSignals() {
     // Handle remote producer creation.
-    this.signalingService.signalStream$.pipe(
+    this.signalingService.signalStream$?.pipe(
       filter(({event}) => event === eventNames.newRemoteProducer),
       map(({data: {producerId, sessionId}}) => ({
         producerId: producerId as string,
@@ -74,7 +76,7 @@ export class SessionService {
     });
 
     // Handle remote producer closure.
-    this.signalingService.signalStream$.pipe(
+    this.signalingService.signalStream$?.pipe(
       filter(({event}) => event === eventNames.remoteProducerClosed),
       map(({data: {sessionId, kind}}) => ({sessionId: sessionId as string, kind: kind as 'audio' | 'video'}))
     ).subscribe(({sessionId, kind}) => {
@@ -84,19 +86,26 @@ export class SessionService {
 
   private handleSessionParametersSignals() {
     // Handle Parameters for publish Session.
-    const localSessionStream$ = this.signalingService.signalStream$.pipe(
+    const localSessionStream$ = this.signalingService.signalStream$?.pipe(
       filter(({event}) => event === eventNames.publishParams),
       map(({data}) => ({...data, isLocal: true}) as SessionParameters),
     );
 
     // Handler Parameters for subscribed Sessions.
-    const remoteSessionStream$ = this.signalingService.signalStream$.pipe(
+    const remoteSessionStream$ = this.signalingService.signalStream$?.pipe(
       filter(({event}) => event === eventNames.consumeParams),
       map(({data}) => ({...data, isLocal: false}) as SessionParameters)
     );
 
     merge(localSessionStream$, remoteSessionStream$).subscribe(parameters => {
       this.store.dispatch(new ParametersReceived(parameters));
+    });
+
+    this.signalingService.signalStream$.pipe(
+      filter(({event}) => event === eventNames.remoteSessionEnd),
+      map(({data}) => (data as { sessionId: string }))
+    ).subscribe(({sessionId}) => {
+      this.store.dispatch(new Ended(sessionId));
     });
   }
 
@@ -154,7 +163,7 @@ export class SessionService {
 
     if (transport.direction != 'recv') return;
     transport.on('produce', ({kind, rtpParameters}, callback, errBack) => {
-      this.signalingService.signalStream$.pipe(
+      this.signalingService.signalStream$?.pipe(
         filter(({event}) => event == eventNames.producerCreated),
         take(1)
       ).subscribe({

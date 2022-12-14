@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
-import {merge, Observable} from 'rxjs';
-import {Select, Store} from '@ngxs/store';
+import {Observable} from 'rxjs';
+import {Select} from '@ngxs/store';
 import {
   LocalSessionModel,
   RemoteSessionModel,
@@ -19,11 +19,10 @@ export class SessionsComponent implements OnInit {
   @Select(SessionState.remoteSessions) remoteSessions$!: Observable<RemoteSessionModel[]>;
   @Select(SessionState.localSession) localSession$!: Observable<LocalSessionModel>;
 
-  constructor(private readonly store: Store) {
+  constructor() {
   }
 
   ngOnInit(): void {
-    merge(this.sessions$).subscribe(x => console.log(x));
   }
 
 }

@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {catchError, EMPTY, isEmpty, of, share, switchMap, throwError} from 'rxjs';
+import {catchError, EMPTY, from, isEmpty, map, of, race, share, switchMap, throwError} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {StreamScopeInfo} from '../../types';
 
@@ -14,13 +14,7 @@ export class ScopeService {
   }
 
   private fetchScopesFromApi() {
-    const url = `https://${environment.apiDomain}/scopes`;
-    return this.httpClient.get<StreamScopeInfo[]>(url).pipe(
-      catchError(error => {
-        console.error(error);
-        return EMPTY;
-      })
-    );
+    return this.httpClient.get<StreamScopeInfo[]>(`https://${environment.apiDomain}/scopes`);
   }
 
   private fetchScopesFromSessionStorage() {
@@ -34,25 +28,11 @@ export class ScopeService {
   }
 
   loadAvailableScopes() {
-    const storageStream$ = this.fetchScopesFromSessionStorage().pipe(share());
-    const apiStream$ = this.fetchScopesFromApi();
-    return storageStream$.pipe(
-      isEmpty(),
-      switchMap(isEmpty => {
-        if (isEmpty) return apiStream$;
-        return storageStream$;
-      })
-    );
+    return this.fetchScopesFromApi();
   }
 
   joinScope(documentId: string, scopeId: string, token: string) {
-    const url = `https://${environment.apiDomain}/${scopeId}/${documentId}/${token}`;
-    return this.httpClient.get(url, {observe: 'response'}).pipe(
-      switchMap(response => {
-        if (response.status == 200) {
-          return of(true);
-        } return throwError(() => new Error(`${response.statusText || response.status}`));
-      })
-    );
+    const url = `https://${environment.apiDomain}/scopes/${scopeId}/${documentId}/${token}`;
+    return this.httpClient.get(url, {observe: 'response'});
   }
 }

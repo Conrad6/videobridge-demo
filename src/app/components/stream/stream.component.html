@@ -5,7 +5,7 @@
     class="border-b-2 border-blue-500 px-2 py-3 flex justify-between items-center row-start-1 row-end-2 col-start-1 col-end-13"
   >
     <div>
-    <h2 class="h2"><span *ngIf="currentScope$|async as scope">{{scope.name}}</span></h2>
+    <h4 class="h4"><span *ngIf="currentScope$|async as scope">{{scope.name}}</span></h4>
       <span class="uppercase block" *ngIf="connectionStatus$|async as status"><i
         [ngClass]="{
       'fas fa-circle':true,

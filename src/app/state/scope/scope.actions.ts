@@ -1,3 +1,5 @@
+import {StreamScopeInfo} from '../../../types';
+
 export namespace Scope {
   export class LoadAvailable {
     static readonly type = '[Scope] Load Available Scopes';
@@ -6,7 +8,7 @@ export namespace Scope {
   export class AvailableLoaded {
     static readonly type = '[Scope] Available scopes loaded';
 
-    constructor(public status: 'failure' | 'success', public error?: string) {
+    constructor(public status: 'failure' | 'success', public error?: string, public scopes?: StreamScopeInfo[]) {
     }
   }
 
@@ -18,7 +20,7 @@ export namespace Scope {
 
   export class JoinAttempted {
     static readonly type = '[Scope] Joining Scope attempted';
-    constructor(public status: 'failure' | 'success', public error?: string) {
+    constructor(public status: 'failure' | 'success', public error?: string, public scope?: StreamScopeInfo) {
     }
   }
 }

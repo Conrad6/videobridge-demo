@@ -9,6 +9,8 @@ import {NgxsModule} from '@ngxs/store';
 import {DevicesState} from './state/devices/devices.state';
 import {ScopeState} from './state/scope/scope.state';
 import {SessionState} from './state/sessions/session.state';
+import {TrackState} from './state/tracks/track.state';
+import {NgxsStoragePluginModule} from '@ngxs/storage-plugin';
 
 @NgModule({
   declarations: [
@@ -22,10 +24,13 @@ import {SessionState} from './state/sessions/session.state';
     NgxsModule.forRoot([
       DevicesState,
       ScopeState,
-      SessionState
-    ])
+      SessionState,
+      TrackState
+    ]),
+    NgxsStoragePluginModule.forRoot(),
   ],
   providers: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}

@@ -1,4 +1,4 @@
-import {Action, State, StateContext} from '@ngxs/store';
+import {Action, Selector, State, StateContext} from '@ngxs/store';
 import {StreamingDevice, StreamingDevices} from '../../../types';
 import {Injectable} from '@angular/core';
 import {Device} from './device.actions';
@@ -10,16 +10,31 @@ const defaultDevices: StreamingDevices = {audio: [], video: []};
 
 export interface DevicesStateModel {
   status: StateLoadingStatus;
-  devices: StreamingDevices,
-  error?: string
+  devices: StreamingDevices;
+  error?: string;
+  selected: { audio?: string, video?: string };
 }
 
 @State<DevicesStateModel>({
   name: 'devices',
-  defaults: {status: 'pending', devices: {...defaultDevices}}
+  defaults: {status: 'pending', devices: {...defaultDevices}, selected: {}}
 })
 @Injectable()
 export class DevicesState {
+  @Selector()
+  static selectedAudio({devices: {selected, devices}}: { devices: DevicesStateModel }) {
+    const selectedAudio = selected.audio;
+    if (!selectedAudio) return undefined;
+    return devices.audio.find(device => device.id === selectedAudio);
+  }
+
+  @Selector()
+  static selectedVideo({devices: {selected, devices}}: { devices: DevicesStateModel }) {
+    const selectedVideo = selected.video;
+    if (!selectedVideo) return undefined;
+    return devices.video.find(device => device.id === selectedVideo);
+  }
+
   constructor(private deviceService: MediaDeviceService) {
   }
 
@@ -49,8 +64,7 @@ export class DevicesState {
       catchError((error: Error) => {
         context.dispatch(new Device.Loaded('failure', error.message));
         return EMPTY;
-      }),
-      map(() => state.devices)
+      })
     );
   }
 
@@ -66,5 +80,23 @@ export class DevicesState {
         return EMPTY;
       })
     )
+  }
+
+  @Action(Device.Select)
+  onDeviceSelect(context: StateContext<DevicesStateModel>,
+                 {deviceId, type}: Device.Select) {
+    const state = context.getState();
+    const device = (type == 'audio' ? state.devices.audio : state.devices.video).find(device => device.id === deviceId);
+    if (!device) return;
+    let oldId: string | undefined;
+    if (type == 'audio') {
+      oldId = state.selected.audio;
+      context.patchState({selected: {...state.selected, audio: deviceId}});
+    } else {
+      oldId = state.selected.video;
+      context.patchState({selected: {...state.selected, video: deviceId}});
+    }
+    if (oldId === deviceId) return;
+    context.dispatch(new Device.SelectionChanged(type, oldId, deviceId));
   }
 }

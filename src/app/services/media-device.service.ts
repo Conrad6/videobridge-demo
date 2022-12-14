@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {filter, forkJoin, from, map, Observable, switchMap, toArray} from 'rxjs';
 import {StreamingDevice, StreamingDevices} from 'src/types/streaming-device';
+import {Store} from '@ngxs/store';
 
 @Injectable({
   providedIn: 'root'

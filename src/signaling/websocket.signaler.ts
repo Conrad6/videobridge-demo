@@ -12,13 +12,13 @@ export class WebSocketSignaler extends AbstractSignaler {
   private retryLimit = 500;
   private connectCount = 0;
   private failCount = 0;
-  constructor(private scope: StreamScopeInfo) {
+  constructor() {
     super();
   }
 
-  override initialize(): void {
+  override initialize(scope: StreamScopeInfo): void {
     this.status = this.failCount > 0 ? 'retrying' : 'connecting';
-    const url = `ws${environment.secured ? 's' : ''}://${environment.apiDomain}${environment.socketPath}?scopeId=${this.scope.id}&scopeDoc=${this.scope.documentId}&token=${this.scope.token}`;
+    const url = `ws${environment.secured ? 's' : ''}://${environment.apiDomain}${environment.socketPath}?scopeId=${scope.id}&scopeDoc=${scope.documentId}&token=${scope.token}`;
     this.connection = new WebSocket(url);
     this.connection.onerror = () => {
       console.error(`Failed to connect to ${url}`)
@@ -34,7 +34,7 @@ export class WebSocketSignaler extends AbstractSignaler {
           return;
         }
         this.retryCount++;
-        timer(this.retryCount * this.retryDelay).subscribe(() => this.initialize());
+        timer(this.retryCount * this.retryDelay).subscribe(() => this.initialize(scope));
         return;
       }
       this.status = 'disconnected';

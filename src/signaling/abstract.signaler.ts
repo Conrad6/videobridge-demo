@@ -1,6 +1,7 @@
 import { BehaviorSubject, Connectable, connectable, Observable, Subject, Subscription } from "rxjs";
 import { Signal } from "./signal.type";
 import { ConnectionStatus, ISignaler } from "./signaler.interface";
+import {StreamScopeInfo} from '../types';
 
 export abstract class AbstractSignaler implements ISignaler {
   protected signalChannel: Subject<Signal<any>>;
@@ -33,6 +34,6 @@ export abstract class AbstractSignaler implements ISignaler {
     this.signalSubscription.unsubscribe();
   }
 
-  initialize() { }
-
+  initialize(scope: StreamScopeInfo): void {
+  }
 }

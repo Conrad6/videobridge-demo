@@ -1,28 +1,23 @@
 import {Injectable} from '@angular/core';
 import {catchError, map, Observable, of, switchMap} from 'rxjs';
 import {StreamScopeInfo} from '../../types';
+import {Select, Store} from '@ngxs/store';
+import {ScopeState} from '../state/scope/scope.state';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  constructor() {
-  }
-
-  get currentScope$(): Observable<StreamScopeInfo | null> {
-    return of(sessionStorage.getItem('SCOPE')).pipe(
-      switchMap(val => {
-        if (!val) return of(null);
-        const scope = JSON.parse(val) as StreamScopeInfo;
-        return of(scope);
-      }),
-      catchError(() => of(null))
-    )
+  currentScope$!: Observable<StreamScopeInfo|undefined>;
+  constructor(store: Store) {
+    this.currentScope$ = store.select(ScopeState.currentScope);
   }
 
   get isAuthed$() {
     return this.currentScope$.pipe(
-      map(scope => !!scope && scope.token != null)
+      map(scope => {
+        return !!scope && scope.token != null;
+      })
     )
   }
 }

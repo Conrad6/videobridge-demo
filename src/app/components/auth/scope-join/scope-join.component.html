@@ -1,11 +1,13 @@
 <div class="p-3">
-    <h3 class="h3">{{ (selectedScope | async)?.name }}</h3>
-    <div class="py-2 flex w-1/2 items-center gap-2">
-        <div>
-            <label>Enter your Authentication token</label>
-            <input [(ngModel)]="token" type="text" class="form-control" />
-            <span class="block text-red-500">{{errorMessage}}</span>
-            <button type="button" (click)="joinScope()" class="btn btn-primary">Join</button>
-        </div>
+  <!--    <h3 class="h3">{{ (selectedScope | async)?.name }}</h3>-->
+  <div class="py-2 flex w-1/2 items-center gap-2">
+    <div>
+      <label>Enter your Authentication token</label>
+      <input [(ngModel)]="token" type="text" class="form-control"/>
+      <span class="block text-red-500">{{errorMessage}}</span>
+      <button [disabled]="!tokenIsValid" type="button" (click)="joinScope()" class="btn btn-primary">
+        Join
+      </button>
     </div>
+  </div>
 </div>

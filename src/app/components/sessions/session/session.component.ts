@@ -1,7 +1,9 @@
 import {Component, ElementRef, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {SessionParameters} from "../../../../types/session-parameters";
-import {SessionStreamService} from '../../../services/session-stream.service';
-import {Subscription} from 'rxjs';
+import {SessionParameters} from "../../../../types";
+import {Actions, ofActionSuccessful} from '@ngxs/store';
+import {Sessions} from '../../../state/sessions/session.actions';
+import Transport = Sessions.Session.Transport;
+import {filter} from 'rxjs';
 
 @Component({
   selector: 'app-session',
@@ -22,17 +24,17 @@ export class SessionComponent implements OnInit, OnDestroy {
   private pos2 = 0;
   private pos3 = 0;
   private pos4 = 0;
-  private sessionWatchSubscription?: Subscription;
 
-  constructor(private readonly sessionStreamService: SessionStreamService) {
+  constructor(private readonly actions$: Actions) {
   }
 
   ngOnDestroy(): void {
-    this.sessionWatchSubscription?.unsubscribe();
   }
 
   ngOnInit(): void {
-
+    this.actions$.pipe(
+      ofActionSuccessful(Transport.Created),
+    ).subscribe(payload => console.log(payload));
   }
 
   closeDrag() {

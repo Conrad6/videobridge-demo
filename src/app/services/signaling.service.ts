@@ -4,43 +4,35 @@ import {ISignaler} from 'src/signaling';
 import {IndicatorSignaler} from 'src/signaling/indicator.signaler';
 import {WebSocketSignaler} from 'src/signaling/websocket.signaler';
 import {StreamScopeInfo} from '../../types';
+import {Select} from '@ngxs/store';
+import {ScopeState} from '../state/scope/scope.state';
+import {Observable} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalingService {
-  private readonly internalSignaler!: ISignaler;
+  private internalSignaler!: ISignaler;
+  @Select(ScopeState.currentScope) currentScope$!: Observable<StreamScopeInfo>;
   constructor() {
-    if (!environment.production) {
-      try {
-        const json = sessionStorage.getItem('SCOPE');
-        if (!json) {
-          console.error('Scope not found!');
-          alert('Scope not found');
-          return;
-        }
-        const scope = JSON.parse(json) as StreamScopeInfo;
-        this.internalSignaler = new WebSocketSignaler(scope);
-      } catch (error) {
-        console.error(error);
-      }
-    } else {
-      this.internalSignaler = new IndicatorSignaler();
-    }
+    this.internalSignaler = new WebSocketSignaler();
   }
+
   get status$() {
     return this.internalSignaler.status$;
   };
   initialize(): void {
-    this.internalSignaler.initialize();
+    this.currentScope$.subscribe(scope => {
+      this.internalSignaler.initialize(scope);
+    })
   }
   teardown(): void {
-    this.internalSignaler.teardown();
+    this.internalSignaler?.teardown();
   }
   send(event: string, payload?: any): void {
     this.internalSignaler?.send(event, payload);
   }
   get signalStream$() {
-    return this.internalSignaler.signalStream$;
+    return this.internalSignaler?.signalStream$;
   }
 }
